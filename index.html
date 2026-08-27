@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Car Fund — On-Road Cost &amp; EMI Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;
+    --surface:#FFFFFF;
+    --ink:#12161C;
+    --muted:#5B6472;
+    --border:#E3E6EA;
+    --accent:#1B4B66;
+    --accent-2:#E8A33D;
+    --good:#2F6B4F;
+    --radius:16px;
+    --shadow: 0 1px 2px rgba(18,22,28,0.04), 0 8px 24px -12px rgba(18,22,28,0.10);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px; margin:0 auto; padding:48px 20px 80px;}
+
+  /* ---------- Hero ---------- */
+  .hero{margin-bottom:40px;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.12em;
+    color:var(--accent);
+    text-transform:uppercase;
+    margin:0 0 14px;
+    font-weight:700;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:clamp(28px, 4.5vw, 42px);
+    line-height:1.08;
+    letter-spacing:-0.01em;
+    margin:0 0 12px;
+    font-weight:700;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:16px;
+    line-height:1.55;
+    max-width:520px;
+    margin:0;
+  }
+
+  /* ---------- Car carousel ---------- */
+  .carousel-wrap{
+    position:relative;
+    margin-bottom:28px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:22px 22px 18px;
+  }
+  .carousel-viewport{
+    overflow:hidden;
+    border-radius:12px;
+  }
+  .carousel-track{
+    display:flex;
+    transition:transform .45s cubic-bezier(.65,.05,.36,1);
+  }
+  .carousel-slide{
+    min-width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+  }
+  .carousel-slide img{
+    width:100%;
+    max-width:520px;
+    height:260px;
+    object-fit:contain;
+    background:#F1F3F5;
+    border-radius:12px;
+    padding:10px;
+  }
+  .car-info{margin-top:14px;}
+  .car-name{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 4px;
+    color:var(--car-color, var(--accent));
+  }
+  .car-range{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--muted);
+    margin:0;
+  }
+  .car-nav{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:1.5px solid var(--border);
+    background:#fff;
+    color:var(--ink);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  .car-nav:hover{border-color:var(--accent); color:var(--accent);}
+  .car-nav.prev{left:2px;}
+  .car-nav.next{right:2px;}
+  .car-nav:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .dots{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-top:16px;
+  }
+  .dot{
+    width:8px; height:8px;
+    border-radius:50%;
+    background:var(--border);
+    border:none;
+    cursor:pointer;
+    padding:0;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .dot.active{background:var(--car-color, var(--accent)); transform:scale(1.3);}
+
+  /* ---------- Panels ---------- */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:26px 24px;
+    margin-bottom:20px;
+    box-shadow:var(--shadow);
+  }
+  .panel h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:19px;
+    font-weight:600;
+    margin:0 0 4px;
+  }
+  .panel .hint{
+    color:var(--muted);
+    font-size:13px;
+    margin:0 0 20px;
+  }
+  #selectedCarName{color:var(--car-color, var(--accent));}
+
+  .field-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+    margin-bottom:22px;
+  }
+  .field label{
+    display:block;
+    font-size:11.5px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .field input[type="number"]{
+    width:100%;
+    border:1.5px solid var(--border);
+    border-radius:9px;
+    padding:9px 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    color:var(--ink);
+    background:#FBFBFC;
+  }
+  .field input[type="number"]:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent);}
+
+  /* Waterfall */
+  .waterfall{
+    display:flex;
+    height:34px;
+    border-radius:8px;
+    overflow:hidden;
+    margin-bottom:10px;
+    border:1px solid var(--border);
+  }
+  .waterfall div{height:100%;}
+  .wf-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:20px;
+  }
+  .wf-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .wf-legend i{width:9px; height:9px; border-radius:2px; display:inline-block;}
+
+  .total-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding-top:16px;
+    border-top:1.5px dashed var(--border);
+  }
+  .total-row .label{font-size:14px; color:var(--muted); font-weight:500;}
+  .total-row .value{
+    font-family:'JetBrains Mono', monospace;
+    font-size:24px;
+    font-weight:700;
+    color:var(--ink);
+  }
+
+  /* ---------- Calculator ---------- */
+  .calc-grid{
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:28px;
+  }
+  .calc-block{margin-bottom:18px;}
+  .calc-block label{
+    display:flex;
+    justify-content:space-between;
+    font-size:12.5px;
+    color:var(--muted);
+    font-weight:600;
+    margin-bottom:8px;
+  }
+  .calc-block label .val{
+    font-family:'JetBrains Mono', monospace;
+    color:var(--ink);
+    font-weight:700;
+  }
+  input[type="range"]{
+    width:100%;
+    accent-color:var(--accent);
+    height:4px;
+  }
+  .quick-btns{display:flex; gap:8px; margin-top:8px;}
+  .quick-btns button{
+    flex:1;
+    border:1.5px solid var(--border);
+    background:#FBFBFC;
+    border-radius:8px;
+    padding:7px 4px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    cursor:pointer;
+    color:var(--muted);
+    transition:all .12s ease;
+  }
+  .quick-btns button:hover{border-color:var(--accent); color:var(--accent);}
+  .quick-btns button.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  .rate-tenure-row{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .rate-tenure-row input[type="number"]{
+    width:100%;
+    border:1.5px solid var(--border);
+    border-radius:9px;
+    padding:9px 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+  }
+
+  .output-stack{display:flex; flex-direction:column; gap:14px;}
+  .output-card{
+    background:#FBFBFC;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px 18px;
+  }
+  .output-card.emphasis{
+    background:linear-gradient(135deg, var(--accent), #14374A);
+    border:none;
+  }
+  .output-card .k{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;}
+  .output-card.emphasis .k{color:#CFE0E9;}
+  .output-card .v{
+    font-family:'JetBrains Mono', monospace;
+    font-size:22px;
+    font-weight:700;
+    margin-top:4px;
+    color:var(--ink);
+  }
+  .output-card.emphasis .v{color:#fff; font-size:28px;}
+  .output-row{display:flex; gap:14px;}
+  .output-row .output-card{flex:1;}
+
+  /* Scenario table */
+  .scenario-table{margin-top:26px; overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--muted);
+    font-weight:600;
+    padding:0 10px 10px;
+    border-bottom:1.5px solid var(--border);
+  }
+  tbody td{
+    padding:12px 10px;
+    border-bottom:1px solid var(--border);
+    font-family:'JetBrains Mono', monospace;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody td.scenario-name{font-family:'Inter',sans-serif; font-weight:600;}
+  tbody tr.current-scenario{background:#F4F8FA;}
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:12.5px;
+    line-height:1.7;
+    margin-top:32px;
+  }
+
+  @media (max-width:720px){
+    .field-grid{grid-template-columns:repeat(2, 1fr);}
+    .calc-grid{grid-template-columns:1fr;}
+    .rate-tenure-row{grid-template-columns:1fr;}
+    .carousel-slide img{height:200px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">Car purchase planner · Bengaluru</p>
+    <h1>Pick a car, see the real number</h1>
+    <p class="sub">On-road cost broken down to the rupee, and what a bigger down payment actually saves you on EMI.</p>
+  </header>
+
+  <section class="carousel-wrap">
+    <button class="car-nav prev" id="prevBtn" aria-label="Previous car">‹</button>
+    <div class="carousel-viewport">
+      <div class="carousel-track" id="carouselTrack"></div>
+    </div>
+    <button class="car-nav next" id="nextBtn" aria-label="Next car">›</button>
+    <div class="dots" id="dots"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Cost breakdown — <span id="selectedCarName"></span></h2>
+    <p class="hint">Figures are Bengaluru on-road estimates (Aug 2026). Edit any field with your dealer's actual quote.</p>
+
+    <div class="field-grid">
+      <div class="field">
+        <label for="f-exshowroom">Ex-showroom</label>
+        <input type="number" id="f-exshowroom" />
+      </div>
+      <div class="field">
+        <label for="f-rto">RTO + road tax</label>
+        <input type="number" id="f-rto" />
+      </div>
+      <div class="field">
+        <label for="f-insurance">Insurance</label>
+        <input type="number" id="f-insurance" />
+      </div>
+      <div class="field">
+        <label for="f-upgrades">Upgrades over base variant</label>
+        <input type="number" id="f-upgrades" />
+      </div>
+    </div>
+
+    <div class="waterfall" id="waterfall"></div>
+    <div class="wf-legend" id="wfLegend"></div>
+
+    <div class="total-row">
+      <span class="label">On-road cost</span>
+      <span class="value" id="totalCost">₹0</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>EMI calculator</h2>
+    <p class="hint">Adjust down payment, interest rate and tenure to see the real monthly number.</p>
+
+    <div class="calc-grid">
+      <div class="calc-inputs">
+
+        <div class="calc-block">
+          <label>Down payment <span class="val" id="dpVal">₹0</span></label>
+          <input type="range" id="dpSlider" min="0" step="5000" />
+          <div class="quick-btns">
+            <button data-pct="0" id="btn0">0% down</button>
+            <button data-pct="50" id="btn50">50% down</button>
+            <button data-pct="100" id="btn100">100% (cash)</button>
+          </div>
+        </div>
+
+        <div class="calc-block">
+          <div class="rate-tenure-row">
+            <div>
+              <label>Interest rate (% p.a.) <span class="val" id="rateVal">9.0%</span></label>
+              <input type="number" id="rateInput" step="0.1" min="0" max="20" value="9" />
+            </div>
+            <div>
+              <label>Tenure (months) <span class="val" id="tenureVal">60</span></label>
+              <input type="number" id="tenureInput" step="1" min="1" max="84" value="60" />
+            </div>
+          </div>
+          <input type="range" id="tenureSlider" min="1" max="84" value="60" style="margin-top:12px;" />
+        </div>
+
+      </div>
+
+      <div class="output-stack">
+        <div class="output-card emphasis">
+          <div class="k">Monthly EMI</div>
+          <div class="v" id="outEMI">₹0</div>
+        </div>
+        <div class="output-row">
+          <div class="output-card">
+            <div class="k">Loan amount</div>
+            <div class="v" id="outLoan">₹0</div>
+          </div>
+          <div class="output-card">
+            <div class="k">Total interest</div>
+            <div class="v" id="outInterest">₹0</div>
+          </div>
+        </div>
+        <div class="output-card">
+          <div class="k">Total you pay (principal + interest)</div>
+          <div class="v" id="outTotal">₹0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Down payment</th>
+            <th>Loan amount</th>
+            <th>EMI / month</th>
+            <th>Total interest</th>
+            <th>Total payable</th>
+          </tr>
+        </thead>
+        <tbody id="scenarioBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Prices are editable estimates, not live dealer quotes — always confirm with the showroom before deciding.<br/>
+    Not financial advice. Built for personal planning only.
+  </footer>
+</div>
+
+<script>
+  // ---------- Car data (Bengaluru on-road estimates, Aug 2026) ----------
+  const CARS = [
+    {
+      id: 'exter', name: 'Hyundai Exter', color: '#1B4B66', img: 'images/exter.png',
+      exShowroom: 580000, rto: 91225, insurance: 34122, upgrades: 100000,
+      rangeLabel: '₹7.1L – 11.6L'
+    },
+    {
+      id: 'dzire', name: 'Maruti Dzire', color: '#6E5A9C', img: 'images/dzire.png',
+      exShowroom: 635000, rto: 90000, insurance: 33000, upgrades: 150000,
+      rangeLabel: '₹7.6L – 11.3L'
+    },
+    {
+      id: 'triber', name: 'Renault Triber', color: '#2F6B4F', img: 'images/triber.png',
+      exShowroom: 576300, rto: 80682, insurance: 28096, upgrades: 80000,
+      rangeLabel: '₹6.9L – 10.4L'
+    },
+    {
+      id: 'fronx', name: 'Maruti Fronx', color: '#A6472B', img: 'images/fronx.png',
+      exShowroom: 685000, rto: 95886, insurance: 35615, upgrades: 200000,
+      rangeLabel: '₹8.1L – 15.3L'
+    },
+  ];
+
+  // per-car editable state, seeded from defaults above
+  const state = {};
+  CARS.forEach(c => state[c.id] = {exShowroom:c.exShowroom, rto:c.rto, insurance:c.insurance, upgrades:c.upgrades});
+
+  let selectedIndex = 0;
+  let selectedId = CARS[0].id;
+  let downPayment = 0;
+  let interestRate = 9;
+  let tenureMonths = 60;
+
+  function fmtINR(n){
+    n = Math.round(n || 0);
+    const neg = n < 0; n = Math.abs(n);
+    const s = n.toString();
+    let last3 = s.substring(s.length-3);
+    let rest = s.substring(0, s.length-3);
+    if (rest !== '') last3 = ',' + last3;
+    let formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + last3;
+    return (neg?'-':'') + '₹' + formatted;
+  }
+
+  function calcEMI(principal, annualRatePct, months){
+    principal = Math.max(0, principal);
+    months = Math.max(0, Math.round(months));
+    if (months === 0 || principal === 0){
+      return {emi:0, totalPayment:principal, totalInterest:0};
+    }
+    const r = (annualRatePct/12)/100;
+    if (r === 0){
+      const emi = principal/months;
+      return {emi, totalPayment:principal, totalInterest:0};
+    }
+    const pow = Math.pow(1+r, months);
+    const emi = principal * r * pow / (pow - 1);
+    const totalPayment = emi * months;
+    const totalInterest = totalPayment - principal;
+    return {emi, totalPayment, totalInterest};
+  }
+
+  function getTotalCost(id){
+    const s = state[id];
+    return s.exShowroom + s.rto + s.insurance + s.upgrades;
+  }
+
+  function buildCarousel(){
+    const track = document.getElementById('carouselTrack');
+    track.innerHTML = CARS.map(c => `
+      <div class="carousel-slide">
+        <img src="${c.img}" alt="${c.name}" />
+        <div class="car-info" style="--car-color:${c.color}">
+          <p class="car-name">${c.name}</p>
+          <p class="car-range">${c.rangeLabel}</p>
+        </div>
+      </div>
+    `).join('');
+
+    const dots = document.getElementById('dots');
+    dots.innerHTML = CARS.map((c, i) => `<button class="dot" data-i="${i}" style="--car-color:${c.color}" aria-label="Show ${c.name}"></button>`).join('');
+    dots.querySelectorAll('.dot').forEach(d => {
+      d.addEventListener('click', () => { selectedIndex = parseInt(d.dataset.i); onCarChange(); });
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      selectedIndex = (selectedIndex - 1 + CARS.length) % CARS.length;
+      onCarChange();
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      selectedIndex = (selectedIndex + 1) % CARS.length;
+      onCarChange();
+    });
+  }
+
+  function updateCarousel(){
+    const track = document.getElementById('carouselTrack');
+    track.style.transform = `translateX(-${selectedIndex * 100}%)`;
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === selectedIndex));
+  }
+
+  function renderBreakdownInputs(){
+    const s = state[selectedId];
+    document.getElementById('f-exshowroom').value = s.exShowroom;
+    document.getElementById('f-rto').value = s.rto;
+    document.getElementById('f-insurance').value = s.insurance;
+    document.getElementById('f-upgrades').value = s.upgrades;
+    const car = CARS.find(c => c.id === selectedId);
+    document.getElementById('selectedCarName').textContent = car.name;
+    document.getElementById('selectedCarName').style.setProperty('--car-color', car.color);
+  }
+
+  function renderWaterfall(){
+    const s = state[selectedId];
+    const total = getTotalCost(selectedId) || 1;
+    const car = CARS.find(c => c.id === selectedId);
+    const segments = [
+      {label:'Ex-showroom', value:s.exShowroom, color:car.color},
+      {label:'RTO + tax', value:s.rto, color:'#9AA5B1'},
+      {label:'Insurance', value:s.insurance, color:'#C7CED6'},
+      {label:'Upgrades', value:s.upgrades, color:'#E8A33D'},
+    ];
+    const wf = document.getElementById('waterfall');
+    wf.innerHTML = segments.map(seg => `<div style="width:${(seg.value/total*100).toFixed(2)}%; background:${seg.color};" title="${seg.label}: ${fmtINR(seg.value)}"></div>`).join('');
+    const legend = document.getElementById('wfLegend');
+    legend.innerHTML = segments.map(seg => `<span><i style="background:${seg.color}"></i>${seg.label} — ${fmtINR(seg.value)}</span>`).join('');
+    document.getElementById('totalCost').textContent = fmtINR(total);
+  }
+
+  function clampDownPayment(){
+    const total = getTotalCost(selectedId);
+    downPayment = Math.min(Math.max(downPayment, 0), total);
+    document.getElementById('dpSlider').max = total;
+    document.getElementById('dpSlider').value = downPayment;
+    document.getElementById('dpVal').textContent = fmtINR(downPayment);
+  }
+
+  function renderCalculator(){
+    const total = getTotalCost(selectedId);
+    clampDownPayment();
+
+    const loan = total - downPayment;
+    const {emi, totalPayment, totalInterest} = calcEMI(loan, interestRate, tenureMonths);
+
+    document.getElementById('outLoan').textContent = fmtINR(loan);
+    document.getElementById('outEMI').textContent = fmtINR(emi) + ' /mo';
+    document.getElementById('outInterest').textContent = fmtINR(totalInterest);
+    document.getElementById('outTotal').textContent = fmtINR(downPayment + totalPayment);
+
+    document.getElementById('rateVal').textContent = interestRate.toFixed(1) + '%';
+    document.getElementById('tenureVal').textContent = tenureMonths;
+
+    // highlight matching quick button
+    const pct = total > 0 ? Math.round((downPayment/total)*100) : 0;
+    ['0','50','100'].forEach(p => {
+      document.getElementById('btn'+p).classList.toggle('active', pct === parseInt(p));
+    });
+
+    renderScenarioTable(total);
+  }
+
+  function renderScenarioTable(total){
+    const scenarios = [
+      {label:'0% down (full loan)', pct:0},
+      {label:'50% down', pct:50},
+      {label:'100% down (cash, no loan)', pct:100},
+    ];
+    const body = document.getElementById('scenarioBody');
+    body.innerHTML = scenarios.map(sc => {
+      const dp = total * sc.pct/100;
+      const loan = total - dp;
+      const {emi, totalInterest, totalPayment} = calcEMI(loan, interestRate, tenureMonths);
+      const isCurrent = Math.round((downPayment/(total||1))*100) === sc.pct;
+      return `<tr class="${isCurrent ? 'current-scenario' : ''}">
+        <td class="scenario-name">${sc.label}</td>
+        <td>${fmtINR(loan)}</td>
+        <td>${sc.pct === 100 ? '—' : fmtINR(emi)}</td>
+        <td>${sc.pct === 100 ? '₹0' : fmtINR(totalInterest)}</td>
+        <td>${fmtINR(dp + totalPayment)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function onCarChange(){
+    selectedId = CARS[selectedIndex].id;
+    const total = getTotalCost(selectedId);
+    downPayment = Math.round(total * 0.2); // reset to 20% default on car switch
+    updateCarousel();
+    renderBreakdownInputs();
+    renderWaterfall();
+    renderCalculator();
+  }
+
+  // ---------- Event bindings ----------
+  ['exshowroom','rto','insurance','upgrades'].forEach(key => {
+    document.getElementById('f-'+key).addEventListener('input', (e) => {
+      const map = {exshowroom:'exShowroom', rto:'rto', insurance:'insurance', upgrades:'upgrades'};
+      state[selectedId][map[key]] = parseFloat(e.target.value) || 0;
+      renderWaterfall();
+      renderCalculator();
+    });
+  });
+
+  document.getElementById('dpSlider').addEventListener('input', (e) => {
+    downPayment = parseFloat(e.target.value) || 0;
+    renderCalculator();
+  });
+
+  ['0','50','100'].forEach(p => {
+    document.getElementById('btn'+p).addEventListener('click', () => {
+      const total = getTotalCost(selectedId);
+      downPayment = Math.round(total * parseInt(p)/100);
+      renderCalculator();
+    });
+  });
+
+  document.getElementById('rateInput').addEventListener('input', (e) => {
+    interestRate = parseFloat(e.target.value) || 0;
+    renderCalculator();
+  });
+
+  document.getElementById('tenureInput').addEventListener('input', (e) => {
+    let v = parseInt(e.target.value) || 1;
+    v = Math.min(Math.max(v, 1), 84);
+    tenureMonths = v;
+    document.getElementById('tenureSlider').value = v;
+    renderCalculator();
+  });
+
+  document.getElementById('tenureSlider').addEventListener('input', (e) => {
+    tenureMonths = parseInt(e.target.value);
+    document.getElementById('tenureInput').value = tenureMonths;
+    renderCalculator();
+  });
+
+  // ---------- Init ----------
+  buildCarousel();
+  onCarChange();
+</script>
+</body>
+</html>
